@@ -1,1 +1,1 @@
-# CMPUT-455-assign3-Simulation-based-Gomoku
+# CMPUT-455-Assign3-Simulation-based-Gomoku
