@@ -22,6 +22,9 @@ import numpy as np
 import re
 
 
+# import Gomoku3
+
+
 class GtpConnection:
     def __init__(self, go_engine, board, debug_mode=False):
         """
@@ -219,7 +222,7 @@ class GtpConnection:
             gtp_moves.append(format_point(coords))
         sorted_moves = " ".join(sorted(gtp_moves))
         self.respond(sorted_moves)
-        
+
     def play_cmd(self, args):
         """
         play a move args[1] for given color args[0] in {'b','w'}
@@ -248,8 +251,8 @@ class GtpConnection:
                 )
             self.respond()
         except Exception as e:
-            self.respond("illegal move: {}".format(str(e).replace('\'','')))
-    
+            self.respond("illegal move: {}".format(str(e).replace('\'', '')))
+
     def genmove_cmd(self, args):
         """
         Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
@@ -301,10 +304,10 @@ class GtpConnection:
     def gogui_rules_board_cmd(self, args):
         size = self.board.size
         str = ''
-        for row in range(size-1, -1, -1):
+        for row in range(size - 1, -1, -1):
             start = self.board.row_start(row + 1)
             for i in range(size):
-                #str += '.'
+                # str += '.'
                 point = self.board.board[start + i]
                 if point == BLACK:
                     str += 'X'
@@ -337,6 +340,7 @@ class GtpConnection:
                      "pstring/Rules GameID/gogui-rules_game_id\n"
                      "pstring/Show Board/gogui-rules_board\n"
                      )
+
 
 def point_to_coord(point, boardsize):
     """
@@ -396,7 +400,7 @@ def move_to_coord(point_str, board_size):
 def color_to_int(c):
     """convert character to the appropriate integer code"""
     color_to_int = {"b": BLACK, "w": WHITE, "e": EMPTY, "BORDER": BORDER}
-    
+
     try:
         return color_to_int[c]
     except:

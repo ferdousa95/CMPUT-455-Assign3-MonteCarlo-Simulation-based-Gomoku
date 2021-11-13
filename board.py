@@ -34,6 +34,8 @@ For many more utility functions, see the GoBoardUtil class in board_util.py.
 The board is stored as a one-dimensional array of GO_POINT in self.board.
 See GoBoardUtil.coord_to_point for explanations of the array encoding.
 """
+
+
 class GoBoard(object):
     def __init__(self, size):
         """
@@ -55,13 +57,13 @@ class GoBoard(object):
             for pt in range(start, start + self.size):
                 current_row.append(pt)
             self.rows.append(current_row)
-            
+
             start = self.row_start(1) + i - 1
             current_col = []
             for pt in range(start, self.row_start(self.size) + i, self.NS):
                 current_col.append(pt)
             self.cols.append(current_col)
-        
+
         self.diags = []
         # diag towards SE, starting from first row (1,1) moving right to (1,n)
         start = self.row_start(1)
@@ -97,7 +99,7 @@ class GoBoard(object):
             while self.get_color(pt) == EMPTY:
                 diag_NE.append(pt)
                 pt += -1 * self.NS + 1
-            if len(diag_NE) >=5:
+            if len(diag_NE) >= 5:
                 self.diags.append(diag_NE)
         assert len(self.rows) == self.size
         assert len(self.cols) == self.size
@@ -134,6 +136,10 @@ class GoBoard(object):
     def get_color(self, point):
         return self.board[point]
 
+    def undo(self, point):
+        self.board[point] = EMPTY
+        self.current_player = GoBoardUtil.opponent(self.current_player)
+
     def pt(self, row, col):
         return coord_to_point(row, col, self.size)
 
@@ -153,7 +159,7 @@ class GoBoard(object):
             The empty points on the board
         """
         return where1d(self.board == EMPTY)
-    
+
     def get_color_points(self, color):
         """
         Return:
@@ -175,7 +181,7 @@ class GoBoard(object):
         """
         for row in range(1, self.size + 1):
             start = self.row_start(row)
-            board[start : start + self.size] = EMPTY
+            board[start: start + self.size] = EMPTY
 
     def is_eye(self, point, color):
         """
@@ -333,7 +339,7 @@ class GoBoard(object):
             board_moves.append(self.last_move)
         if self.last2_move != None and self.last2_move != PASS:
             board_moves.append(self.last2_move)
-            return 
+            return
 
     def detect_five_in_a_row(self):
         """
