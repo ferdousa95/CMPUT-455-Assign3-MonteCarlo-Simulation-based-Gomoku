@@ -35,6 +35,7 @@ The board is stored as a one-dimensional array of GO_POINT in self.board.
 See GoBoardUtil.coord_to_point for explanations of the array encoding.
 """
 
+
 class GoBoard(object):
     def __init__(self, size):
         """
@@ -379,8 +380,3 @@ class GoBoard(object):
             if counter == 5 and prev != EMPTY:
                 return prev
         return EMPTY
-
-    # Leah - This function will be the setter for changing policy.
-    #      - Input sanitizing will be done by who calls it
-    def set_policy(self, newPol):
-        self.policy = newPol

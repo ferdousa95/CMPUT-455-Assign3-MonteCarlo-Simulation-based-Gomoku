@@ -26,6 +26,9 @@ import re
 
 
 class GtpConnection:
+    RANDOM = "random"
+    RULE_BASED = "rule_based"
+
     def __init__(self, go_engine, board, debug_mode=False):
         """
         Manage a GTP connection for a Go-playing engine
@@ -40,6 +43,7 @@ class GtpConnection:
         self._debug_mode = debug_mode
         self.go_engine = go_engine
         self.board = board
+        self.policytype = self.RANDOM
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -347,18 +351,21 @@ class GtpConnection:
                      "pstring/Show Board/gogui-rules_board\n"
                      )
 
+    # Leah - This function will be the setter for changing policy.
+    #      - Input sanitizing will be done by who calls it
+    def set_policy(self, policytype):
+        self.policytype = policytype
 
     # Leah code here.
     # Implementing the policy policy type GTP Command function
     # Idea is that it checks that its one of the two inputs, then calls the setter in board to change it
     def policy_cmd(self, args):
-        if args == "random" or args == "rule_based":
-            self.board.set_policy(args)
+        if args[0] == self.RANDOM or args[0] == self.RULE_BASED:
+            self.set_policy(args[0])
 
     # Implementing the policy_moves GTP Command function
     def policy_moves_cmd(self, args):
-        x = 1
-
+        pass
 
 
 def point_to_coord(point, boardsize):
