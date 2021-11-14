@@ -114,6 +114,10 @@ class GoBoard(object):
         self.WE = 1
         self.ko_recapture = None
         self.last_move = None
+
+        # Leah - Added policy as part of the board object. RANDOM = 0, RULE_BASED = 1
+        self.policy = "random"
+
         self.last2_move = None
         self.current_player = BLACK
         self.maxpoint = size * size + 3 * (size + 1)
