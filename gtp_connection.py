@@ -8,6 +8,8 @@ at the University of Edinburgh.
 """
 import traceback
 from sys import stdin, stdout, stderr
+
+from Gomoku3 import FlatMonteCarloSimulation
 from board_util import (
     GoBoardUtil,
     BLACK,
@@ -44,6 +46,7 @@ class GtpConnection:
         self.go_engine = go_engine
         self.board = board
         self.policytype = self.RANDOM
+        self.simulateRandomMove = FlatMonteCarloSimulation()
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -363,14 +366,53 @@ class GtpConnection:
         if args[0] == self.RANDOM or args[0] == self.RULE_BASED:
             self.set_policy(args[0])
 
+    def get_coord_from_point(self, number):
+        move = number
+        move_coord = point_to_coord(move, self.board.size)
+        move_as_string = format_point(move_coord)
+        return move_as_string
+
+    def random(self):
+        return self.simulateRandomMove.recommend_a_move_for(self.board.current_player)
+
+    def win(self):
+        pass
+
+    def block_win(self):
+        pass
+
+    def open_four(self):
+        pass
+
+    def block_open_four(self):
+        pass
+
     # Implementing the policy_moves GTP Command function
     def policy_moves_cmd(self, args):
-        pass
+
+        if self.policytype == self.RANDOM:
+            pos_number = self.random()
+            move = self.get_coord_from_point(pos_number)
+            self.respond("{movetype} {pos}".format(movetype="Random", pos=move))
+
+        else:
+            if self.win():
+                pass
+            elif self.block_win():
+                pass
+            elif self.open_four():
+                pass
+            elif self.block_open_four():
+                pass
+            else:
+                pos_number = self.random()
+                move = self.get_coord_from_point(pos_number)
+                self.respond("{movetype} {pos}".format(movetype="Random", pos=move))
 
 
 def point_to_coord(point, boardsize):
     """
-    Transform point given as board array index 
+    Transform point given as board array index
     to (row, col) coordinate representation.
     Special case: PASS is not transformed
     """
