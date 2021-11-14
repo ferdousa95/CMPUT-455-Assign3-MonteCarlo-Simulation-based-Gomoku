@@ -70,7 +70,7 @@ class FlatMonteCarloSimulation:
         -------
 
         """
-        our_player = self.color_scheme[color]
+        our_player = color
         stats = [0] * 3
         TOTAL_SIMULATION = 10
         self.board.play_move(move, self.board.current_player)  # 1 ply sim so first round is fix
@@ -141,4 +141,4 @@ class FlatMonteCarloSimulation:
 
 
 run = FlatMonteCarloSimulation()
-run.recommend_a_move_for("w")
+run.recommend_a_move_for(1)
