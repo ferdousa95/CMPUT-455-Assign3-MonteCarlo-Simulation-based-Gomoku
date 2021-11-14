@@ -31,7 +31,7 @@ class FlatMonteCarloSimulation:
         """
         self.board = GoBoard(7)
 
-    def genmove(self, color):
+    def recommend_a_move_for(self, color):
         """
         Get moves goes over all the empty points and create a score for all of them, and then returns the best scored
         position as recommendation.
@@ -141,4 +141,4 @@ class FlatMonteCarloSimulation:
 
 
 run = FlatMonteCarloSimulation()
-run.genmove("w")
+run.recommend_a_move_for("w")
