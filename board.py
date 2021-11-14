@@ -35,7 +35,6 @@ The board is stored as a one-dimensional array of GO_POINT in self.board.
 See GoBoardUtil.coord_to_point for explanations of the array encoding.
 """
 
-
 class GoBoard(object):
     def __init__(self, size):
         """
@@ -114,6 +113,10 @@ class GoBoard(object):
         self.WE = 1
         self.ko_recapture = None
         self.last_move = None
+
+        # Leah - Added policy as part of the board object. RANDOM = 0, RULE_BASED = 1
+        self.policy = "random"
+
         self.last2_move = None
         self.current_player = BLACK
         self.maxpoint = size * size + 3 * (size + 1)
@@ -376,3 +379,8 @@ class GoBoard(object):
             if counter == 5 and prev != EMPTY:
                 return prev
         return EMPTY
+
+    # Leah - This function will be the setter for changing policy.
+    #      - Input sanitizing will be done by who calls it
+    def set_policy(self, newPol):
+        self.policy = newPol

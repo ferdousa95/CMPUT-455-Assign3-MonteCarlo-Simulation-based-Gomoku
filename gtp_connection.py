@@ -60,7 +60,12 @@ class GtpConnection:
             "gogui-rules_side_to_move": self.gogui_rules_side_to_move_cmd,
             "gogui-rules_board": self.gogui_rules_board_cmd,
             "gogui-rules_final_result": self.gogui_rules_final_result_cmd,
-            "gogui-analyze_commands": self.gogui_analyze_cmd
+            "gogui-analyze_commands": self.gogui_analyze_cmd,
+
+            # Leah here. Added both policy_moves and policy policy type to commands.
+            "policy": self.policy_cmd,
+            "policy_moves": self.policy_moves_cmd
+
         }
 
         # used for argument checking
@@ -73,6 +78,7 @@ class GtpConnection:
             "genmove": (1, "Usage: genmove {w,b}"),
             "play": (2, "Usage: play {b,w} MOVE"),
             "legal_moves": (1, "Usage: legal_moves {w,b}"),
+            "policytype": (1, "Usage: setting policy type")
         }
 
     def write(self, data):
@@ -340,6 +346,19 @@ class GtpConnection:
                      "pstring/Rules GameID/gogui-rules_game_id\n"
                      "pstring/Show Board/gogui-rules_board\n"
                      )
+
+
+    # Leah code here.
+    # Implementing the policy policy type GTP Command function
+    # Idea is that it checks that its one of the two inputs, then calls the setter in board to change it
+    def policy_cmd(self, args):
+        if args == "random" or args == "rule_based":
+            self.board.set_policy(args)
+
+    # Implementing the policy_moves GTP Command function
+    def policy_moves_cmd(self, args):
+        x = 1
+
 
 
 def point_to_coord(point, boardsize):
