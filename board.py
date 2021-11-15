@@ -380,3 +380,12 @@ class GoBoard(object):
             if counter == 5 and prev != EMPTY:
                 return prev
         return EMPTY
+
+    def table_rows(self):
+        return self.rows
+
+    def table_cols(self):
+        return self.cols
+
+    def table_diags(self):
+        return self.diags
