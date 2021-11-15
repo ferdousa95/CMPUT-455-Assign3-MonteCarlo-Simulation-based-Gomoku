@@ -467,16 +467,16 @@ class GtpConnection:
             if len(pattern) >= 6 and pattern[-6:] in [".xxx..", "..xxx.", ".x.xx.", ".xx.x."]:
                 if pattern[-6:] == ".xxx..":
                     point = list[counter - 1]
-                    moves.append(point_to_coord(point))
+                    moves.append(point)
                 elif pattern[-6:] == "..xxx.":
                     point = list[counter - 4]
-                    moves.append(point_to_coord(point))
+                    moves.append(point)
                 elif pattern[-6:] == ".x.xx.":
                     point = list[counter - 3]
-                    moves.append(point_to_coord(point))
+                    moves.append(point)
                 elif pattern[-6:] == ".xx.x.":
                     point = list[counter - 2]
-                    moves.append(point_to_coord(point)) 
+                    moves.append(point) 
         return moves
 
     
