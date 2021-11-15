@@ -31,7 +31,10 @@ class FlatMonteCarloSimulation:
         Then returns the recommendation of here to play in this round.
         """
         self.board = board
-
+        
+    def get_move(self, board, color):
+        return GoBoardUtil.generate_random_move(board, color)
+    
     def genmove(self, color):
         """
         Get moves goes over all the empty points and create a score for all of them, and then returns the best scored

@@ -9,7 +9,6 @@ at the University of Edinburgh.
 import traceback
 from sys import stdin, stdout, stderr
 
-from Gomoku3 import FlatMonteCarloSimulation
 from board_util import (
     GoBoardUtil,
     BLACK,
@@ -46,7 +45,7 @@ class GtpConnection:
         self.go_engine = go_engine
         self.board = board
         self.policytype = self.RANDOM
-        self.simulateRandomMove = FlatMonteCarloSimulation()
+        self.simulateRandomMove = go_engine
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -373,7 +372,7 @@ class GtpConnection:
         return move_as_string
 
     def random(self):
-        return self.simulateRandomMove.recommend_a_move_for(self.board.current_player)
+        return self.go_engine.get_move(self.board, self.board.current_player)
 
     def win(self):
         pass
