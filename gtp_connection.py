@@ -279,7 +279,23 @@ class GtpConnection:
             return
         board_color = args[0].lower()
         color = color_to_int(board_color)
-        move = self.go_engine.get_move(self.board, color)
+        
+        move = self.go_engine.genmove(self.policytype, color)
+        
+        throwaway, moves = self.get_rule_moves()
+        numMoves = len(moves)
+        higherStates = numMoves + numMoves  # padding values cause the total number of values to increase
+        score = [0] * higherStates
+
+        # the board position is the array index, so pos=9's score is stored in score[9]
+        for i in range(numMoves):
+            pos = int(moves[i])
+            score[int(pos)] = self.simulate_score(color, self, pos)
+
+        bestIndex = score.index(max(score))
+        assert bestIndex in self.board.get_empty_points()
+
+        
         move_coord = point_to_coord(move, self.board.size)
         move_as_string = format_point(move_coord)
         if self.board.is_legal(move, color):
@@ -371,7 +387,7 @@ class GtpConnection:
         move_coord = point_to_coord(move, self.board.size)
         move_as_string = format_point(move_coord)
         return move_as_string
-
+    '''
     def random(self):
         return self.go_engine.get_move(self.board, self.board.current_player)
 
@@ -526,11 +542,11 @@ class GtpConnection:
                 return "BlockOpenFour", block_open_four
             else:
                 return "Random", GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
-        
+        '''
     # Implementing the policy_moves GTP Command function
     def policy_moves_cmd(self, args):
 
-        movetype, move_list = self.get_rule_moves()
+        movetype, move_list = self.go_engine.get_rule_moves(self.policytype)
         format_moves = [0] * len(move_list)
         if len(move_list) != 0:
             for i in range(0, len(move_list)):
