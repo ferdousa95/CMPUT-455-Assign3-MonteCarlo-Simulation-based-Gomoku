@@ -22,6 +22,7 @@ from board_util import (
 )
 import numpy as np
 import re
+import random
 
 
 # import Gomoku3
@@ -444,11 +445,62 @@ class GtpConnection:
     def block_win(self):
         pass
 
+    def has_open_four_in_list(self, list, player):
+        """
+        Returns a list of open four moves if any open fours for the current player exist in the list.
+        Returns an empty list otherwise.
+        """
+        moves = []
+
+        # list_len = len(list)
+        pattern = ""
+        # use the counter to determine the playable positions
+        counter = -1
+        for stone in list:
+            counter += 1
+            if self.get_color(stone) == GoBoardUtil.opponent(player):
+                pattern += "o"
+            elif self.get_color(stone) == EMPTY:
+                pattern += "."
+            elif self.get_color(stone) == player:
+                pattern += "x"
+            if len(pattern) >= 6 and pattern[-6:] in [".xxx..", "..xxx.", ".x.xx.", ".xx.x."]:
+                if pattern[-6:] == ".xxx..":
+                    point = list[counter - 1]
+                    moves.append(point_to_coord(point))
+                elif pattern[-6:] == "..xxx.":
+                    point = list[counter - 4]
+                    moves.append(point_to_coord(point))
+                elif pattern[-6:] == ".x.xx.":
+                    point = list[counter - 3]
+                    moves.append(point_to_coord(point))
+                elif pattern[-6:] == ".xx.x.":
+                    point = list[counter - 2]
+                    moves.append(point_to_coord(point)) 
+        return moves
+
+    
     def open_four(self):
-        pass
+        result = []
+        for r in self.board.rows:
+            result.extend(self.has_open_four_in_list(r, self.board.current_player))
+        for c in self.board.cols:
+            result.extend(self.has_open_four_in_list(c, self.board.current_player))
+        for d in self.board.diags:
+            result.extend(self.has_open_four_in_list(d, self.board.current_player))
+        return result
+
 
     def block_open_four(self):
-        pass
+        result = []
+        for r in self.board.rows:
+            result.extend(self.has_open_four_in_list(r, GoBoardUtil.opponent(self.board.current_player)))
+        for c in self.board.cols:
+            result.extend(self.has_open_four_in_list(c, GoBoardUtil.opponent(self.board.current_player)))
+        for d in self.board.diags:
+            result.extend(self.has_open_four_in_list(d, GoBoardUtil.opponent(self.board.current_player)))
+        return result
+
 
     # Implementing the policy_moves GTP Command function
     def policy_moves_cmd(self, args):
