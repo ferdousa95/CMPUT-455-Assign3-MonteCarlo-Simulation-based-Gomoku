@@ -374,8 +374,62 @@ class GtpConnection:
     def random(self):
         return self.go_engine.get_move(self.board, self.board.current_player)
 
-    def win(self):
-        pass
+    def get_win(self, line_of_stones, pattern):
+        score_list = []
+        index_to_play = []
+        one_winning_move_pattern = pattern
+        # Get each rows
+
+        for r in line_of_stones:
+            # Get each stone in a row
+            for values in r:
+                score_list.append(self.board.get_color(values))
+
+            list_to_string = "".join(map(str, score_list))
+
+            # match each pattern in the text
+            for pattern in one_winning_move_pattern:
+                match_object = re.search(pattern, list_to_string)
+                # if pattern is present inside a text
+                if pattern in list_to_string:
+                    index_start = match_object.span()[0]
+                    index_end = match_object.span()[1]
+                    # process the match
+                    for i in range(index_start, index_end):
+                        if score_list[i] == 0:
+                            index_to_play.append(r[i])
+
+            score_list.clear()
+
+        if not index_to_play:
+            return None
+        else:
+            return index_to_play
+
+    def win_wrapper(self):
+        if self.board.current_player == BLACK:
+            pattern = ['11110', '11101', '11011', '10111', '01111']
+        else:
+            pattern = ['22220', '22202', '22022', '20222', '02222']
+
+        row_value = self.get_win(self.board.table_rows(), pattern)
+        col_value = self.get_win(self.board.table_cols(), pattern)
+        diag_value = self.get_win(self.board.table_diags(), pattern)
+
+        if row_value is not None:
+            row_value = list(set(row_value))
+            self.respond("{row}".format(row=row_value))
+            return row_value
+        if col_value is not None:
+            col_value = list(set(col_value))
+            self.respond("{col}".format(col=col_value))
+            return col_value
+        if diag_value is not None:
+            diag_value = list(set(diag_value))
+            self.respond("{diag}".format(diag=diag_value))
+            return diag_value
+        else:
+            return None
 
     def block_win(self):
         pass
@@ -389,24 +443,25 @@ class GtpConnection:
     # Implementing the policy_moves GTP Command function
     def policy_moves_cmd(self, args):
 
-        if self.policytype == self.RANDOM:
-            pos_number = self.random()
-            move = self.get_coord_from_point(pos_number)
-            self.respond("{movetype} {pos}".format(movetype="Random", pos=move))
-
-        else:
-            if self.win():
-                pass
-            elif self.block_win():
-                pass
-            elif self.open_four():
-                pass
-            elif self.block_open_four():
-                pass
-            else:
-                pos_number = self.random()
-                move = self.get_coord_from_point(pos_number)
-                self.respond("{movetype} {pos}".format(movetype="Random", pos=move))
+        # if self.policytype == self.RANDOM:
+        #     pos_number = self.random()
+        #     move = self.get_coord_from_point(pos_number)
+        #     self.respond("{movetype} {pos}".format(movetype="Random", pos=move))
+        #     self.win_wrapper()
+        self.win_wrapper()
+        # else:
+        #     if self.win():
+        #         pass
+        #     elif self.block_win():
+        #         pass
+        #     elif self.open_four():
+        #         pass
+        #     elif self.block_open_four():
+        #         pass
+        #     else:
+        #         pos_number = self.random()
+        #         move = self.get_coord_from_point(pos_number)
+        #         self.respond("{movetype} {pos}".format(movetype="Random", pos=move))
 
 
 def point_to_coord(point, boardsize):
