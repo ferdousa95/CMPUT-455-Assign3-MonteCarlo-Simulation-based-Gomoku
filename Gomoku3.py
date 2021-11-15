@@ -1,5 +1,5 @@
 import random
-
+import re
 from board import GoBoard
 import traceback
 from gtp_connection import GtpConnection
@@ -21,7 +21,9 @@ class FlatMonteCarloSimulation:
         "b": BLACK,
         "B": BLACK,
         "w": WHITE,
-        "W": WHITE
+        "W": WHITE,
+        1: BLACK,
+        2: WHITE
     }
 
     def __init__(self, board):
@@ -30,13 +32,12 @@ class FlatMonteCarloSimulation:
         position in a round.
         Then returns the recommendation of here to play in this round.
         """
-        self.board = None
-        # self.board = board
-
+        self.board = board
+        
     def get_move(self, board, color):
         return GoBoardUtil.generate_random_move(board, color)
-
-    def genmove(self, color):
+    
+    def genmove(self, gtp, color):
         """
         Get moves goes over all the empty points and create a score for all of them, and then returns the best scored
         position as recommendation.
@@ -49,23 +50,31 @@ class FlatMonteCarloSimulation:
         -------
 
         """
-        moves = board.
-        moves = self.board.get_empty_points()
+        
+        throwaway, moves = gtp.get_rule_moves()
+        print("moves")
+        print(moves)
         numMoves = len(moves)
         higherStates = numMoves + numMoves  # padding values cause the total number of values to increase
         score = [0] * higherStates
 
         # the board position is the array index, so pos=9's score is stored in score[9]
-        for i in range(numMoves):
+        for i in range(0, numMoves):
             pos = int(moves[i])
-            score[int(pos)] = self.simulate_score(color, pos)
+            score[i] = self.simulate_score(color, pos, gtp)
 
+        print(score)
         bestIndex = score.index(max(score))
-        assert bestIndex in self.board.get_empty_points()
+        print("best")
+        print(bestIndex)
+        print("moves")
+        print(moves)
+        print(moves[bestIndex])
+        assert moves[bestIndex] in self.board.get_empty_points()
 
-        return bestIndex
-
-    def simulate_score(self, color, move):
+        return moves[bestIndex]
+    
+    def simulate_score(self, color, move, gtp):
         """
         move is a specific move from where we need to run the simulation, so after playing one round on move, we
         simulate 10 times to get an average chance of winning for the current player
@@ -76,20 +85,24 @@ class FlatMonteCarloSimulation:
         -------
 
         """
-        our_player = color  # self.color_scheme[color]
+        
+        our_player = self.color_scheme[color[0]]
         stats = [0] * 3
         TOTAL_SIMULATION = 10
         self.board.play_move(move, self.board.current_player)  # 1 ply sim so first round is fix
-        all_moves = self.board.get_empty_points()
+        throwaway, all_moves = gtp.get_rule_moves()
 
         # run sim and keep the total score
         for simulation in range(10):
-            winner = self.simulate()
+            winner = self.simulate(gtp)
             stats[winner] = stats[winner] + 1
 
             # getting all the moves that were used in previous simulation
-            leftover_moves = self.board.get_empty_points()
-            undo_moves = set(all_moves) - set(leftover_moves)
+            leftover_moves = gtp.get_rule_moves()
+           
+            undo_moves = [item for item in all_moves if item not in leftover_moves]
+        
+            #undo_moves = set(all_moves) - set(leftover_moves)
             self.undo_multiple(list(undo_moves))
 
         assert sum(stats) == TOTAL_SIMULATION
@@ -115,7 +128,7 @@ class FlatMonteCarloSimulation:
         for move in list_of_moves:
             self.board.undo(move)
 
-    def simulate(self):
+    def simulate(self, gtp):
         """
         Runs one simulation of the game till end by randomly assigning values for both player and then evaluating
         who won the round.
@@ -127,9 +140,9 @@ class FlatMonteCarloSimulation:
 
         """
         if self.board.detect_five_in_a_row() == EMPTY and \
-                len(self.board.get_empty_points()) != 0:  # the game is not over
+            len(self.board.get_empty_points()) != 0:  # the game is not over
 
-            all_moves = self.board.get_empty_points()
+            throwaway, all_moves = gtp.get_rule_moves()
             all_moves = list(all_moves)
             random.shuffle(all_moves)
             while self.board.detect_five_in_a_row() == EMPTY and len(all_moves) != 0:
@@ -153,7 +166,6 @@ def run():
     board = GoBoard(7)
     con = GtpConnection(FlatMonteCarloSimulation(board), board)
     con.start_connection()
-
 
 if __name__ == "__main__":
     run()

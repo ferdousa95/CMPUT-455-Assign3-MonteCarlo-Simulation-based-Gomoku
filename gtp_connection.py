@@ -292,8 +292,8 @@ class GtpConnection:
         if not empty_points:
             self.respond("pass")
             return
-        point = self.go_engine.genmove(self.board.current_player)
-        coord = self.get_coord_from_point(point)
+        point = self.go_engine.genmove(self, args)
+        coord = format_point(point_to_coord(point, self.board.size))
         self.respond("{print}".format(print=coord))
 
     def gogui_rules_game_id_cmd(self, args):
@@ -373,13 +373,15 @@ class GtpConnection:
     def policy_cmd(self, args):
         if args[0] == self.RANDOM or args[0] == self.RULE_BASED:
             self.set_policy(args[0])
-
+    '''
     def get_coord_from_point(self, number):
         move = number
         move_coord = point_to_coord(move, self.board.size)
+        print(move_coord)
         move_as_string = format_point(move_coord)
+        print(move_as_string)
         return move_as_string
-
+    '''
     def random(self):
         return self.go_engine.get_move(self.board, self.board.current_player)
 
