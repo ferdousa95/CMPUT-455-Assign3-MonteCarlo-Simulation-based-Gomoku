@@ -458,11 +458,11 @@ class GtpConnection:
         counter = -1
         for stone in list:
             counter += 1
-            if self.get_color(stone) == GoBoardUtil.opponent(player):
+            if self.board.get_color(stone) == GoBoardUtil.opponent(player):
                 pattern += "o"
-            elif self.get_color(stone) == EMPTY:
+            elif self.board.get_color(stone) == EMPTY:
                 pattern += "."
-            elif self.get_color(stone) == player:
+            elif self.board.get_color(stone) == player:
                 pattern += "x"
             if len(pattern) >= 6 and pattern[-6:] in [".xxx..", "..xxx.", ".x.xx.", ".xx.x."]:
                 if pattern[-6:] == ".xxx..":
