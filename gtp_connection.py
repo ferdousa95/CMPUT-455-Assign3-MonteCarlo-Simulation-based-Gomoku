@@ -267,26 +267,33 @@ class GtpConnection:
             self.respond("illegal move: {}".format(str(e).replace('\'', '')))
 
     def genmove_cmd(self, args):
-        """
-        Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
-        """
-        result = self.board.detect_five_in_a_row()
-        if result == GoBoardUtil.opponent(self.board.current_player):
-            self.respond("resign")
-            return
-        if self.board.get_empty_points().size == 0:
+        # """
+        # Generate a move for the color args[0] in {'b', 'w'}, for the game of gomoku.
+        # """
+        # result = self.board.detect_five_in_a_row()
+        # if result == GoBoardUtil.opponent(self.board.current_player):
+        #     self.respond("resign")
+        #     return
+        # if self.board.get_empty_points().size == 0:
+        #     self.respond("pass")
+        #     return
+        # board_color = args[0].lower()
+        # color = color_to_int(board_color)
+        # move = self.go_engine.get_move(self.board, color)
+        # move_coord = point_to_coord(move, self.board.size)
+        # move_as_string = format_point(move_coord)
+        # if self.board.is_legal(move, color):
+        #     self.board.play_move(move, color)
+        #     self.respond(move_as_string.lower())
+        # else:
+        #     self.respond("Illegal move: {}".format(move_as_string))
+        empty_points = len(self.board.get_empty_points())
+        if not empty_points:
             self.respond("pass")
             return
-        board_color = args[0].lower()
-        color = color_to_int(board_color)
-        move = self.go_engine.get_move(self.board, color)
-        move_coord = point_to_coord(move, self.board.size)
-        move_as_string = format_point(move_coord)
-        if self.board.is_legal(move, color):
-            self.board.play_move(move, color)
-            self.respond(move_as_string.lower())
-        else:
-            self.respond("Illegal move: {}".format(move_as_string))
+        point = self.genmove(self.board.current_player)
+        coord = self.get_coord_from_point(point)
+        self.respond("{print}".format(print=coord))
 
     def gogui_rules_game_id_cmd(self, args):
         self.respond("Gomoku")
@@ -421,22 +428,22 @@ class GtpConnection:
             row_value = list(set(row_value))
             for row in row_value:
                 total_pos.append(row)
-            self.respond("{row}".format(row=row_value))
+            # self.respond("{row}".format(row=row_value))
 
         if col_value is not None:
             col_value = list(set(col_value))
             for col in col_value:
                 total_pos.append(col)
-            self.respond("{col}".format(col=col_value))
-            
+            # self.respond("{col}".format(col=col_value))
+
         if diag_value is not None:
             diag_value = list(set(diag_value))
             for diag in diag_value:
                 total_pos.append(diag)
-            self.respond("{diag}".format(diag=diag_value))
+            # self.respond("{diag}".format(diag=diag_value))
 
         if total_pos is not None:
-            self.respond(str(total_pos))
+            # self.respond(str(total_pos))
             return total_pos
         else:
             return None
@@ -478,10 +485,9 @@ class GtpConnection:
                     moves.append(point)
                 elif pattern[-6:] == ".xx.x.":
                     point = list[counter - 2]
-                    moves.append(point) 
+                    moves.append(point)
         return moves
 
-    
     def open_four(self):
         result = []
         for r in self.board.rows:
@@ -491,7 +497,6 @@ class GtpConnection:
         for d in self.board.diags:
             result.extend(self.has_open_four_in_list(d, self.board.current_player))
         return result
-
 
     def block_open_four(self):
         result = []
@@ -504,18 +509,18 @@ class GtpConnection:
         return result
 
     def get_rule_moves(self):
-        
+
         if self.policytype == self.RANDOM:
             return "Random", GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
-            
+
         else:
             win = self.win_wrapper()
             block_win = self.block_win()
             open_four = self.open_four()
             block_open_four = self.block_open_four()
-            
-            print(win)
-            print(block_win)
+
+            # print(win)
+            # print(block_win)
             if len(win) != 0:
                 return "Win", win
             elif len(block_win) != 0:
@@ -526,7 +531,7 @@ class GtpConnection:
                 return "BlockOpenFour", block_open_four
             else:
                 return "Random", GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
-        
+
     # Implementing the policy_moves GTP Command function
     def policy_moves_cmd(self, args):
 
@@ -535,8 +540,133 @@ class GtpConnection:
         if len(move_list) != 0:
             for i in range(0, len(move_list)):
                 format_moves[i] = format_point(point_to_coord(move_list[i], self.board.size))
-            self.respond("{move_type} {pos}".format(move_type = movetype, pos= ' '.join(map(str,format_moves))))
-        
+            self.respond("{move_type} {pos}".format(move_type=movetype, pos=' '.join(map(str, format_moves))))
+
+    # color_scheme = {
+    #     "b": BLACK,
+    #     "B": BLACK,
+    #     "w": WHITE,
+    #     "W": WHITE
+    # }
+
+    # def __init__(self, board):
+    #     """
+    #     Gomoku player select moves randomly from the set of legal moves and simulate the chances of winning in each
+    #     position in a round.
+    #     Then returns the recommendation of here to play in this round.
+    #     """
+    #     self.board = board
+
+    def get_move(self, board, color):
+        return GoBoardUtil.generate_random_move(board, color)
+
+    def genmove(self, color):
+        """
+        Get moves goes over all the empty points and create a score for all of them, and then returns the best scored
+        position as recommendation.
+
+        Parameters
+        ----------
+        color - our player
+
+        Returns - the recommended position
+        -------
+
+        """
+        moves = self.board.get_empty_points()
+        numMoves = len(moves)
+        higherStates = numMoves + numMoves  # padding values cause the total number of values to increase
+        score = [0] * higherStates
+
+        # the board position is the array index, so pos=9's score is stored in score[9]
+        for i in range(numMoves):
+            pos = int(moves[i])
+            score[int(pos)] = self.simulate_score(color, pos)
+
+        bestIndex = score.index(max(score))
+        assert bestIndex in self.board.get_empty_points()
+
+        return bestIndex
+
+    def simulate_score(self, color, move):
+        """
+        move is a specific move from where we need to run the simulation, so after playing one round on move, we
+        simulate 10 times to get an average chance of winning for the current player
+        ----------
+        move - the move we want to evaluate the score
+
+        Returns - the evaluated score for @param move.
+        -------
+
+        """
+        our_player = color  # self.color_scheme[color]
+        stats = [0] * 3
+        TOTAL_SIMULATION = 10
+        self.board.play_move(move, self.board.current_player)  # 1 ply sim so first round is fix
+        all_moves = self.board.get_empty_points()
+
+        # run sim and keep the total score
+        for simulation in range(10):
+            winner = self.simulate()
+            stats[winner] = stats[winner] + 1
+
+            # getting all the moves that were used in previous simulation
+            leftover_moves = self.board.get_empty_points()
+            undo_moves = set(all_moves) - set(leftover_moves)
+            self.undo_multiple(list(undo_moves))
+
+        assert sum(stats) == TOTAL_SIMULATION
+        self.board.undo(move)
+        # Current player winning chance if he plays the @param - move
+        result = (stats[self.board.current_player] + 0.5 * stats[EMPTY]) / TOTAL_SIMULATION
+        if our_player != self.board.current_player:
+            return 1 - result
+        return result
+
+    def undo_multiple(self, list_of_moves):
+        """
+        Takes all the moves that needs to be undone. And loops to undo them
+
+        Parameters
+        ----------
+        list_of_moves - all the undo moves
+
+        Returns - nothing
+        -------
+
+        """
+        for move in list_of_moves:
+            self.board.undo(move)
+
+    def simulate(self):
+        """
+        Runs one simulation of the game till end by randomly assigning values for both player and then evaluating
+        who won the round.
+
+        Returns - For Black - 1
+                  For White - 2
+                  For Draw -  0
+        -------
+
+        """
+        if self.board.detect_five_in_a_row() == EMPTY and \
+                len(self.board.get_empty_points()) != 0:  # the game is not over
+
+            all_moves = self.board.get_empty_points()
+            all_moves = list(all_moves)
+            random.shuffle(all_moves)
+            while self.board.detect_five_in_a_row() == EMPTY and len(all_moves) != 0:
+                self.board.play_move(all_moves[-1], self.board.current_player)
+                all_moves[0] = all_moves[-1]
+                all_moves.pop()
+        return self.board.detect_five_in_a_row()
+
+    def print_board(self):
+        """
+        Prints the board
+        """
+        print(str(GoBoardUtil.get_twoD_board(self.board)))
+        print("\n")
 
 
 def point_to_coord(point, boardsize):
