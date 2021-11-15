@@ -416,19 +416,28 @@ class GtpConnection:
         row_value = self.get_win(self.board.table_rows(), pattern)
         col_value = self.get_win(self.board.table_cols(), pattern)
         diag_value = self.get_win(self.board.table_diags(), pattern)
-
+        total_pos = []
         if row_value is not None:
             row_value = list(set(row_value))
+            for row in row_value:
+                total_pos.append(row)
             self.respond("{row}".format(row=row_value))
-            return row_value
+
         if col_value is not None:
             col_value = list(set(col_value))
+            for col in col_value:
+                total_pos.append(col)
             self.respond("{col}".format(col=col_value))
-            return col_value
+            
         if diag_value is not None:
             diag_value = list(set(diag_value))
+            for diag in diag_value:
+                total_pos.append(diag)
             self.respond("{diag}".format(diag=diag_value))
-            return diag_value
+
+        if total_pos:
+            self.respond(str(total_pos))
+            return total_pos
         else:
             return None
 
