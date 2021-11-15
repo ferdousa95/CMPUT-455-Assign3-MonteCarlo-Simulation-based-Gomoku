@@ -9,7 +9,6 @@ at the University of Edinburgh.
 import traceback
 from sys import stdin, stdout, stderr
 
-from Gomoku3 import FlatMonteCarloSimulation
 from board_util import (
     GoBoardUtil,
     BLACK,
@@ -47,7 +46,7 @@ class GtpConnection:
         self.go_engine = go_engine
         self.board = board
         self.policytype = self.RANDOM
-        self.simulateRandomMove = FlatMonteCarloSimulation()
+        self.simulateRandomMove = go_engine
         self.commands = {
             "protocol_version": self.protocol_version_cmd,
             "quit": self.quit_cmd,
@@ -374,7 +373,7 @@ class GtpConnection:
         return move_as_string
 
     def random(self):
-        return self.simulateRandomMove.recommend_a_move_for(self.board.current_player)
+        return self.go_engine.get_move(self.board, self.board.current_player)
 
     def get_win(self, line_of_stones, pattern):
         score_list = []
@@ -436,14 +435,17 @@ class GtpConnection:
                 total_pos.append(diag)
             self.respond("{diag}".format(diag=diag_value))
 
-        if total_pos:
+        if total_pos is not None:
             self.respond(str(total_pos))
             return total_pos
         else:
             return None
 
     def block_win(self):
-        pass
+        self.board.current_player = GoBoardUtil.opponent(self.board.current_player)
+        win_list = self.win_wrapper()
+        self.board.current_player = GoBoardUtil.opponent(self.board.current_player)
+        return win_list
 
     def has_open_four_in_list(self, list, player):
         """
@@ -458,11 +460,11 @@ class GtpConnection:
         counter = -1
         for stone in list:
             counter += 1
-            if self.get_color(stone) == GoBoardUtil.opponent(player):
+            if self.board.get_color(stone) == GoBoardUtil.opponent(player):
                 pattern += "o"
-            elif self.get_color(stone) == EMPTY:
+            elif self.board.get_color(stone) == EMPTY:
                 pattern += "."
-            elif self.get_color(stone) == player:
+            elif self.board.get_color(stone) == player:
                 pattern += "x"
             if len(pattern) >= 6 and pattern[-6:] in [".xxx..", "..xxx.", ".x.xx.", ".xx.x."]:
                 if pattern[-6:] == ".xxx..":
@@ -501,29 +503,40 @@ class GtpConnection:
             result.extend(self.has_open_four_in_list(d, GoBoardUtil.opponent(self.board.current_player)))
         return result
 
-
+    def get_rule_moves(self):
+        
+        if self.policytype == self.RANDOM:
+            return "Random", GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
+            
+        else:
+            win = self.win_wrapper()
+            block_win = self.block_win()
+            open_four = self.open_four()
+            block_open_four = self.block_open_four()
+            
+            print(win)
+            print(block_win)
+            if len(win) != 0:
+                return "Win", win
+            elif len(block_win) != 0:
+                return "BlockWin", block_win
+            elif len(open_four) != 0:
+                return "OpenFour", open_four
+            elif len(block_open_four) != 0:
+                return "BlockOpenFour", block_open_four
+            else:
+                return "Random", GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
+        
     # Implementing the policy_moves GTP Command function
     def policy_moves_cmd(self, args):
 
-        # if self.policytype == self.RANDOM:
-        #     pos_number = self.random()
-        #     move = self.get_coord_from_point(pos_number)
-        #     self.respond("{movetype} {pos}".format(movetype="Random", pos=move))
-        #     self.win_wrapper()
-        self.win_wrapper()
-        # else:
-        #     if self.win():
-        #         pass
-        #     elif self.block_win():
-        #         pass
-        #     elif self.open_four():
-        #         pass
-        #     elif self.block_open_four():
-        #         pass
-        #     else:
-        #         pos_number = self.random()
-        #         move = self.get_coord_from_point(pos_number)
-        #         self.respond("{movetype} {pos}".format(movetype="Random", pos=move))
+        movetype, move_list = self.get_rule_moves()
+        format_moves = [0] * len(move_list)
+        if len(move_list) != 0:
+            for i in range(0, len(move_list)):
+                format_moves[i] = format_point(point_to_coord(move_list[i], self.board.size))
+            self.respond("{move_type} {pos}".format(move_type = movetype, pos= ' '.join(map(str,format_moves))))
+        
 
 
 def point_to_coord(point, boardsize):
