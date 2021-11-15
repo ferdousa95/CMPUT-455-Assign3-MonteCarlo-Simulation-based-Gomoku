@@ -432,7 +432,10 @@ class GtpConnection:
             return None
 
     def block_win(self):
-        pass
+        self.board.current_player = GoBoardUtil.opponent(self.board.current_player)
+        win_list = self.win_wrapper()
+        self.board.current_player = GoBoardUtil.opponent(self.board.current_player)
+        return win_list
 
     def open_four(self):
         pass
