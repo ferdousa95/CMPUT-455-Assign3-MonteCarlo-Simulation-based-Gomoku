@@ -2,6 +2,7 @@ import random
 
 from board import GoBoard
 import traceback
+from gtp_connection import GtpConnection
 from sys import stdin, stdout, stderr
 from board_util import (
     GoBoardUtil,
@@ -23,13 +24,13 @@ class FlatMonteCarloSimulation:
         "W": WHITE
     }
 
-    def __init__(self):
+    def __init__(self, board):
         """
         Gomoku player select moves randomly from the set of legal moves and simulate the chances of winning in each
         position in a round.
         Then returns the recommendation of here to play in this round.
         """
-        self.board = GoBoard(7)
+        self.board = board
 
     def genmove(self, color):
         """
@@ -140,5 +141,16 @@ class FlatMonteCarloSimulation:
         print("\n")
 
 
-run = FlatMonteCarloSimulation()
-run.genmove("w")
+
+
+
+def run():
+    """
+    start the gtp connection and wait for commands.
+    """
+    board = GoBoard(7)
+    con = GtpConnection(FlatMonteCarloSimulation(board), board)
+    con.start_connection()
+
+if __name__ == "__main__":
+    run()
