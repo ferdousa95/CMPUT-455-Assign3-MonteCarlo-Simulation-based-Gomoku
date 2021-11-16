@@ -293,6 +293,10 @@ class GtpConnection:
             self.respond("pass")
             return
         point = self.go_engine.genmove(self, args)
+        if args[0].lower() == 'w':
+            self.board.play_move(point, 2)
+        elif args[0].lower() == 'b':
+            self.board.play_move(point, 1)
         coord = format_point(point_to_coord(point, self.board.size))
         self.respond("{print}".format(print=coord))
 
@@ -373,15 +377,7 @@ class GtpConnection:
     def policy_cmd(self, args):
         if args[0] == self.RANDOM or args[0] == self.RULE_BASED:
             self.set_policy(args[0])
-    '''
-    def get_coord_from_point(self, number):
-        move = number
-        move_coord = point_to_coord(move, self.board.size)
-        print(move_coord)
-        move_as_string = format_point(move_coord)
-        print(move_as_string)
-        return move_as_string
-    '''
+   
     def random(self):
         return self.go_engine.get_move(self.board, self.board.current_player)
 
@@ -456,8 +452,7 @@ class GtpConnection:
         win_list = self.win_wrapper()
         self.board.current_player = GoBoardUtil.opponent(self.board.current_player)
         return win_list
-
-    def has_open_four_in_list(self, list, player):
+    def block_open_four_in_list(self, list, player):
         """
         Returns a list of open four moves if any open fours for the current player exist in the list.
         Returns an empty list otherwise.
@@ -476,19 +471,88 @@ class GtpConnection:
                 pattern += "."
             elif self.board.get_color(stone) == player:
                 pattern += "x"
-            if len(pattern) >= 6 and pattern[-6:] in [".xxx..", "..xxx.", ".x.xx.", ".xx.x."]:
-                if pattern[-6:] == ".xxx..":
-                    point = list[counter - 1]
+                
+        
+        if any(x in pattern for x in ["..xxx",".xxx..", "..xxx.", ".x.xx.", ".xx.x."]):
+           
+            if "..xxx.." in pattern:
+                point= list[pattern.index("..xxx..")+1]
+                pointTwo= list[pattern.index("..xxx..")+5]
+                if point not in moves:
                     moves.append(point)
-                elif pattern[-6:] == "..xxx.":
-                    point = list[counter - 4]
+                if pointTwo not in moves:
+                    moves.append(pointTwo)
+                    
+            elif ".xxx.." in pattern:
+                point = list[pattern.index(".xxx..")]
+                pointTwo = list[pattern.index(".xxx..")+4]
+                pointThree = list[pattern.index(".xxx..")+5]
+                if point not in moves:
                     moves.append(point)
-                elif pattern[-6:] == ".x.xx.":
-                    point = list[counter - 3]
+                if pointTwo not in moves:
+                    moves.append(pointTwo)
+                if pointThree not in moves:
+                    moves.append(pointThree)
+            
+            elif "..xxx." in pattern:
+                point = list[pattern.index("..xxx.")]
+                pointTwo = list[pattern.index("..xxx.")+1]
+                pointThree = list[pattern.index("..xxx.")+5]
+                if point not in moves:
                     moves.append(point)
-                elif pattern[-6:] == ".xx.x.":
-                    point = list[counter - 2]
+                if pointTwo not in moves:
+                    moves.append(pointTwo)
+                if pointThree not in moves:
+                    moves.append(pointThree)
+                
+            elif ".x.xx." in pattern:
+                point = list[pattern.index(".x.xx.")+2]
+                if point not in moves:
                     moves.append(point)
+                
+            elif ".xx.x." in pattern:
+                point = list[pattern.index(".xx.x.")+3]
+                if point not in moves:
+                    moves.append(point)
+        return moves
+
+    def has_open_four_in_list(self, list, player):
+        """
+        Returns a list of open four moves if any open fours for the current player exist in the list.
+        Returns an empty list otherwise.
+        """
+        moves = []
+
+        # list_len = len(list)
+        pattern = ""
+        # use the counter to determine the playable positions
+        counter = -1
+        
+        for stone in list:
+            counter += 1
+            if self.board.get_color(stone) == GoBoardUtil.opponent(player):
+                pattern += "o"
+            elif self.board.get_color(stone) == EMPTY:
+                pattern += "."
+            elif self.board.get_color(stone) == player:
+                pattern += "x"
+            if any(x in pattern for x in ["..xxx",".xxx..", "..xxx.", ".x.xx.", ".xx.x."]):
+                if ".xxx.." in pattern:
+                    point = list[pattern.index(".xxx..")+4]
+                    if point not in moves:
+                        moves.append(point)
+                elif "..xxx." in pattern:
+                    point = list[pattern.index("..xxx.")+1]
+                    if point not in moves:
+                        moves.append(point)
+                elif ".x.xx." in pattern:
+                    point = list[pattern.index(".x.xx.")+2]
+                    if point not in moves:
+                        moves.append(point)
+                elif ".xx.x." in pattern:
+                    point = list[pattern.index(".xx.x.")+3]
+                    if point not in moves:
+                        moves.append(point)
         return moves
 
     def open_four(self):
@@ -504,15 +568,16 @@ class GtpConnection:
     def block_open_four(self):
         result = []
         for r in self.board.rows:
-            result.extend(self.has_open_four_in_list(r, GoBoardUtil.opponent(self.board.current_player)))
+            result.extend(self.block_open_four_in_list(r, GoBoardUtil.opponent(self.board.current_player)))
         for c in self.board.cols:
-            result.extend(self.has_open_four_in_list(c, GoBoardUtil.opponent(self.board.current_player)))
+            result.extend(self.block_open_four_in_list(c, GoBoardUtil.opponent(self.board.current_player)))
         for d in self.board.diags:
-            result.extend(self.has_open_four_in_list(d, GoBoardUtil.opponent(self.board.current_player)))
+            result.extend(self.block_open_four_in_list(d, GoBoardUtil.opponent(self.board.current_player)))
+       
         return result
 
     def get_rule_moves(self):
-
+        
         if self.policytype == self.RANDOM:
             return "Random", GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
 
@@ -522,8 +587,6 @@ class GtpConnection:
             open_four = self.open_four()
             block_open_four = self.block_open_four()
 
-            # print(win)
-            # print(block_win)
             if len(win) != 0:
                 return "Win", win
             elif len(block_win) != 0:
@@ -544,132 +607,8 @@ class GtpConnection:
             for i in range(0, len(move_list)):
                 format_moves[i] = format_point(point_to_coord(move_list[i], self.board.size))
             self.respond("{move_type} {pos}".format(move_type=movetype, pos=' '.join(map(str, format_moves))))
-
-    # color_scheme = {
-    #     "b": BLACK,
-    #     "B": BLACK,
-    #     "w": WHITE,
-    #     "W": WHITE
-    # }
-
-    # def __init__(self, board):
-    #     """
-    #     Gomoku player select moves randomly from the set of legal moves and simulate the chances of winning in each
-    #     position in a round.
-    #     Then returns the recommendation of here to play in this round.
-    #     """
-    #     self.board = board
-    #
-    # def get_move(self, board, color):
-    #     return GoBoardUtil.generate_random_move(board, color)
-    #
-    # def genmove(self, color):
-    #     """
-    #     Get moves goes over all the empty points and create a score for all of them, and then returns the best scored
-    #     position as recommendation.
-    #
-    #     Parameters
-    #     ----------
-    #     color - our player
-    #
-    #     Returns - the recommended position
-    #     -------
-    #
-    #     """
-    #     moves = self.board.get_empty_points()
-    #     numMoves = len(moves)
-    #     higherStates = numMoves + numMoves  # padding values cause the total number of values to increase
-    #     score = [0] * higherStates
-    #
-    #     # the board position is the array index, so pos=9's score is stored in score[9]
-    #     for i in range(numMoves):
-    #         pos = int(moves[i])
-    #         score[int(pos)] = self.simulate_score(color, pos)
-    #
-    #     bestIndex = score.index(max(score))
-    #     assert bestIndex in self.board.get_empty_points()
-    #
-    #     return bestIndex
-    #
-    # def simulate_score(self, color, move):
-    #     """
-    #     move is a specific move from where we need to run the simulation, so after playing one round on move, we
-    #     simulate 10 times to get an average chance of winning for the current player
-    #     ----------
-    #     move - the move we want to evaluate the score
-    #
-    #     Returns - the evaluated score for @param move.
-    #     -------
-    #
-    #     """
-    #     our_player = color  # self.color_scheme[color]
-    #     stats = [0] * 3
-    #     TOTAL_SIMULATION = 10
-    #     self.board.play_move(move, self.board.current_player)  # 1 ply sim so first round is fix
-    #     all_moves = self.board.get_empty_points()
-    #
-    #     # run sim and keep the total score
-    #     for simulation in range(10):
-    #         winner = self.simulate()
-    #         stats[winner] = stats[winner] + 1
-    #
-    #         # getting all the moves that were used in previous simulation
-    #         leftover_moves = self.board.get_empty_points()
-    #         undo_moves = set(all_moves) - set(leftover_moves)
-    #         self.undo_multiple(list(undo_moves))
-    #
-    #     assert sum(stats) == TOTAL_SIMULATION
-    #     self.board.undo(move)
-    #     # Current player winning chance if he plays the @param - move
-    #     result = (stats[self.board.current_player] + 0.5 * stats[EMPTY]) / TOTAL_SIMULATION
-    #     if our_player != self.board.current_player:
-    #         return 1 - result
-    #     return result
-    #
-    # def undo_multiple(self, list_of_moves):
-    #     """
-    #     Takes all the moves that needs to be undone. And loops to undo them
-    #
-    #     Parameters
-    #     ----------
-    #     list_of_moves - all the undo moves
-    #
-    #     Returns - nothing
-    #     -------
-    #
-    #     """
-    #     for move in list_of_moves:
-    #         self.board.undo(move)
-    #
-    # def simulate(self):
-    #     """
-    #     Runs one simulation of the game till end by randomly assigning values for both player and then evaluating
-    #     who won the round.
-    #
-    #     Returns - For Black - 1
-    #               For White - 2
-    #               For Draw -  0
-    #     -------
-    #
-    #     """
-    #     if self.board.detect_five_in_a_row() == EMPTY and \
-    #             len(self.board.get_empty_points()) != 0:  # the game is not over
-    #
-    #         all_moves = self.board.get_empty_points()
-    #         all_moves = list(all_moves)
-    #         random.shuffle(all_moves)
-    #         while self.board.detect_five_in_a_row() == EMPTY and len(all_moves) != 0:
-    #             self.board.play_move(all_moves[-1], self.board.current_player)
-    #             all_moves[0] = all_moves[-1]
-    #             all_moves.pop()
-    #     return self.board.detect_five_in_a_row()
-    #
-    # def print_board(self):
-    #     """
-    #     Prints the board
-    #     """
-    #     print(str(GoBoardUtil.get_twoD_board(self.board)))
-    #     print("\n")
+        else:
+            self.respond("")
 
 
 def point_to_coord(point, boardsize):

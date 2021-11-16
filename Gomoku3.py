@@ -2,7 +2,7 @@ import random
 import re
 from board import GoBoard
 import traceback
-from gtp_connection import GtpConnection
+from gtp_connection import GtpConnection, format_point, point_to_coord
 from sys import stdin, stdout, stderr
 from board_util import (
     GoBoardUtil,
@@ -52,8 +52,7 @@ class FlatMonteCarloSimulation:
         """
         
         throwaway, moves = gtp.get_rule_moves()
-        print("moves")
-        print(moves)
+      
         numMoves = len(moves)
         higherStates = numMoves + numMoves  # padding values cause the total number of values to increase
         score = [0] * higherStates
@@ -63,13 +62,9 @@ class FlatMonteCarloSimulation:
             pos = int(moves[i])
             score[i] = self.simulate_score(color, pos, gtp)
 
-        print(score)
+        
         bestIndex = score.index(max(score))
-        print("best")
-        print(bestIndex)
-        print("moves")
-        print(moves)
-        print(moves[bestIndex])
+        
         assert moves[bestIndex] in self.board.get_empty_points()
 
         return moves[bestIndex]
@@ -98,14 +93,10 @@ class FlatMonteCarloSimulation:
             stats[winner] = stats[winner] + 1
 
             # getting all the moves that were used in previous simulation
-            leftover_moves = gtp.get_rule_moves()
-           
-            undo_moves = [item for item in all_moves if item not in leftover_moves]
-        
-            #undo_moves = set(all_moves) - set(leftover_moves)
-            self.undo_multiple(list(undo_moves))
+            
 
         assert sum(stats) == TOTAL_SIMULATION
+      
         self.board.undo(move)
         # Current player winning chance if he plays the @param - move
         result = (stats[self.board.current_player] + 0.5 * stats[EMPTY]) / TOTAL_SIMULATION
@@ -139,16 +130,23 @@ class FlatMonteCarloSimulation:
         -------
 
         """
+        moves_made = []
         if self.board.detect_five_in_a_row() == EMPTY and \
             len(self.board.get_empty_points()) != 0:  # the game is not over
 
             throwaway, all_moves = gtp.get_rule_moves()
             all_moves = list(all_moves)
+            
             random.shuffle(all_moves)
             while self.board.detect_five_in_a_row() == EMPTY and len(all_moves) != 0:
                 self.board.play_move(all_moves[-1], self.board.current_player)
+                moves_made.append(all_moves[-1])
                 all_moves[0] = all_moves[-1]
+            
                 all_moves.pop()
+        
+      
+        self.undo_multiple(moves_made)
         return self.board.detect_five_in_a_row()
 
     def print_board(self):
