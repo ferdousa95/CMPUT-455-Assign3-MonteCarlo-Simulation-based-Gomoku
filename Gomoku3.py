@@ -1,3 +1,7 @@
+#!/usr/local/bin/python3
+# /usr/bin/python3
+# Set the path to your python3 above
+
 import random
 import re
 from board import GoBoard
@@ -33,6 +37,8 @@ class FlatMonteCarloSimulation:
         Then returns the recommendation of here to play in this round.
         """
         self.board = board
+        self.name = "GomokuAssignment3"
+        self.version = 1.0
         
     def get_move(self, board, color):
         return GoBoardUtil.generate_random_move(board, color)
@@ -162,7 +168,8 @@ def run():
     start the gtp connection and wait for commands.
     """
     board = GoBoard(7)
-    con = GtpConnection(FlatMonteCarloSimulation(board), board)
+    FMCS = FlatMonteCarloSimulation(board)
+    con = GtpConnection(FMCS, FMCS.board)
     con.start_connection()
 
 if __name__ == "__main__":

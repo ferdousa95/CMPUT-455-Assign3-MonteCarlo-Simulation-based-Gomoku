@@ -377,6 +377,7 @@ class GtpConnection:
     def policy_cmd(self, args):
         if args[0] == self.RANDOM or args[0] == self.RULE_BASED:
             self.set_policy(args[0])
+        self.respond()
    
     def random(self):
         return self.go_engine.get_move(self.board, self.board.current_player)
@@ -606,6 +607,7 @@ class GtpConnection:
         if len(move_list) != 0:
             for i in range(0, len(move_list)):
                 format_moves[i] = format_point(point_to_coord(move_list[i], self.board.size))
+            format_moves = sorted(format_moves)
             self.respond("{move_type} {pos}".format(move_type=movetype, pos=' '.join(map(str, format_moves))))
         else:
             self.respond("")
