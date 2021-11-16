@@ -1,3 +1,5 @@
+#! /python
+
 import random
 import re
 from board import GoBoard
@@ -32,6 +34,8 @@ class FlatMonteCarloSimulation:
         position in a round.
         Then returns the recommendation of here to play in this round.
         """
+        self.name = "GomokuAssignment2"
+        self.version = 1.0
         self.board = board
         
     def get_move(self, board, color):

@@ -377,6 +377,7 @@ class GtpConnection:
     def policy_cmd(self, args):
         if args[0] == self.RANDOM or args[0] == self.RULE_BASED:
             self.set_policy(args[0])
+        self.respond()
    
     def random(self):
         return self.go_engine.get_move(self.board, self.board.current_player)
@@ -579,7 +580,13 @@ class GtpConnection:
     def get_rule_moves(self):
         
         if self.policytype == self.RANDOM:
-            return "Random", GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
+            colmaker = self.board.table_cols()
+            trueList = []
+            for i in colmaker:
+                for x in i:
+                    if self.board.is_legal(x, self.board.current_player):
+                        trueList.append(x)
+            return "Random", trueList
 
         else:
             win = self.win_wrapper()
@@ -596,7 +603,13 @@ class GtpConnection:
             elif len(block_open_four) != 0:
                 return "BlockOpenFour", block_open_four
             else:
-                return "Random", GoBoardUtil.generate_legal_moves(self.board, self.board.current_player)
+                colmaker = self.board.table_cols()
+                trueList = []
+                for i in colmaker:
+                    for x in i:
+                        if self.board.is_legal(x, self.board.current_player):
+                            trueList.append(x)
+                return "Random", trueList
 
     # Implementing the policy_moves GTP Command function
     def policy_moves_cmd(self, args):
